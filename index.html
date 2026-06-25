@@ -87,7 +87,6 @@
   </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
 <script>
 const MESES = ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 const fmt = n => '$' + Math.round(n).toLocaleString('es-CL');
@@ -118,7 +117,7 @@ const VAQUILLAS = Array.from({length: 100}, (_, i) => ({
   kg: 230 + Math.random() * 70,
   precio: 2600 + Math.random() * 400,
   valor: Math.random() * 1000000,
-  muerta: i === 25 || i === 62 // 2 muertas
+  muerta: i === 25 || i === 62
 }));
 
 function render() {
@@ -183,8 +182,12 @@ function switchTab(name) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   event.target.classList.add('active');
 }
+</script>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script>
 render();
 </script>
+
 </body>
 </html>
