@@ -4,21 +4,19 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ALMA Dashboard</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; color: #333; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; }
   .header { background: #2d5016; color: white; padding: 20px 30px; }
   .header h1 { font-size: 24px; margin-bottom: 5px; }
-  .header p { font-size: 12px; opacity: 0.8; }
-  .tabs { display: flex; gap: 0; background: #2d5016; padding: 0 30px; border-bottom: 3px solid #4a8c4a; }
+  .tabs { display: flex; background: #2d5016; padding: 0 30px; }
   .tab { padding: 12px 20px; cursor: pointer; border: none; background: transparent; color: rgba(255,255,255,0.7); font-weight: 500; }
   .tab.active { background: white; color: #2d5016; }
   .container { max-width: 1200px; margin: 0 auto; padding: 30px; }
   .section { display: none; }
   .section.active { display: block; }
   .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px; }
-  .kpi { background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #4a8c4a; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+  .kpi { background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #2d5016; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
   .kpi-label { font-size: 11px; color: #666; text-transform: uppercase; font-weight: 600; margin-bottom: 5px; }
   .kpi-value { font-size: 28px; font-weight: 600; color: #2d5016; }
   .kpi-sub { font-size: 12px; color: #999; margin-top: 5px; }
@@ -30,7 +28,7 @@
   thead { background: #f0f0f0; }
   th { padding: 10px; text-align: left; font-weight: 600; color: #666; border-bottom: 2px solid #ddd; }
   td { padding: 10px; border-bottom: 1px solid #eee; }
-  @media (max-width: 900px) { .chart-grid { grid-template-columns: 1fr; } .kpi-grid { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 900px) { .chart-grid { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
@@ -43,8 +41,6 @@
 <div class="tabs" id="tabs"></div>
 
 <div class="container">
-  
-  <!-- RESUMEN -->
   <div class="section active" id="resumen">
     <div class="kpi-grid">
       <div class="kpi"><div class="kpi-label">Total Egresos</div><div class="kpi-value" id="eg-total"></div></div>
@@ -58,7 +54,6 @@
     </div>
   </div>
 
-  <!-- EGRESOS -->
   <div class="section" id="egresos">
     <div class="kpi-grid">
       <div class="kpi"><div class="kpi-label">Total</div><div class="kpi-value" id="eg-t"></div></div>
@@ -66,131 +61,94 @@
       <div class="kpi"><div class="kpi-label">Pendiente</div><div class="kpi-value" id="eg-pe"></div></div>
     </div>
     <div class="chart-box" style="margin-bottom: 30px;">
-      <h3>Egresos por Mes</h3>
-      <div class="chart-container"><canvas id="c3"></canvas></div>
-    </div>
-    <div class="chart-box" style="margin-bottom: 30px;">
       <h3>Detalle de Egresos</h3>
-      <div style="overflow-x:auto">
-        <table>
-          <thead><tr><th>Fecha</th><th>Proveedor</th><th>Detalle</th><th>Categoría</th><th>Total</th><th>Estado</th></tr></thead>
-          <tbody id="eg-table"></tbody>
-        </table>
-      </div>
+      <div style="overflow-x:auto"><table><thead><tr><th>Fecha</th><th>Proveedor</th><th>Categoría</th><th>Total</th><th>Estado</th></tr></thead><tbody id="eg-table"></tbody></table></div>
     </div>
   </div>
 
-  <!-- INGRESOS -->
   <div class="section" id="ingresos">
-    <div class="kpi-grid">
-      <div class="kpi"><div class="kpi-label">Total</div><div class="kpi-value" id="in-t"></div></div>
-      <div class="kpi"><div class="kpi-label">Aportes</div><div class="kpi-value" id="in-ap"></div></div>
-      <div class="kpi"><div class="kpi-label">Operacionales</div><div class="kpi-value" id="in-op"></div></div>
-    </div>
-    <div class="chart-box" style="margin-bottom: 30px;">
+    <div class="chart-box">
       <h3>Detalle de Ingresos</h3>
-      <div style="overflow-x:auto">
-        <table>
-          <thead><tr><th>Fecha</th><th>Proveedor</th><th>Detalle</th><th>Categoría</th><th>Total</th></tr></thead>
-          <tbody id="in-table"></tbody>
-        </table>
-      </div>
+      <div style="overflow-x:auto"><table><thead><tr><th>Fecha</th><th>Proveedor</th><th>Categoría</th><th>Total</th></tr></thead><tbody id="in-table"></tbody></table></div>
     </div>
   </div>
 
-  <!-- VAQUILLAS -->
   <div class="section" id="vaquillas">
     <div class="kpi-grid">
       <div class="kpi"><div class="kpi-label">Total Compradas</div><div class="kpi-value" id="vq-t"></div></div>
       <div class="kpi"><div class="kpi-label">Vivas</div><div class="kpi-value" id="vq-v"></div></div>
-      <div class="kpi"><div class="kpi-label">Muertas</div><div class="kpi-value" id="vq-m"></div><div class="kpi-sub" id="vq-pct"></div></div>
-      <div class="kpi"><div class="kpi-label">Inversión Total</div><div class="kpi-value" id="vq-inv"></div></div>
+      <div class="kpi"><div class="kpi-label">Muertas</div><div class="kpi-value" id="vq-m"></div></div>
+      <div class="kpi"><div class="kpi-label">Inversión</div><div class="kpi-value" id="vq-inv"></div></div>
     </div>
-    <div class="chart-box" style="margin-bottom: 30px;">
+    <div class="chart-box">
       <h3>Detalle de Vaquillas</h3>
-      <div style="overflow-x:auto">
-        <table>
-          <thead><tr><th>Fecha</th><th>ID</th><th>Factura</th><th>Kg</th><th>Precio</th><th>Valor</th><th>Estado</th></tr></thead>
-          <tbody id="vq-table"></tbody>
-        </table>
-      </div>
+      <div style="overflow-x:auto"><table><thead><tr><th>ID</th><th>Factura</th><th>Kg</th><th>Precio</th><th>Valor</th><th>Estado</th></tr></thead><tbody id="vq-table"></tbody></table></div>
     </div>
   </div>
-
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
 <script>
 const MESES = ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 const fmt = n => '$' + Math.round(n).toLocaleString('es-CL');
 const fmtS = n => {
   if (Math.abs(n) >= 1e6) return '$' + (n/1e6).toFixed(1) + 'M';
-  if (Math.abs(n) >= 1e3) return '$' + Math.round(n/1e3).toLocaleString('es-CL');
-  return '$' + Math.round(n);
+  return '$' + Math.round(n/1e3) + 'K';
 };
 
-// DATOS EMBEBIDOS
 const EGRESOS = [
-  {fecha:"2026-04-16",mes:4,proveedor:"FERIAS ARAUCANIA S.A.",detalle:"Compra terneras",categoria:"Compra terneras",total:39941350,estado:"pagado"},
-  {fecha:"2026-04-20",mes:4,proveedor:"JUAN PATRICIO AREVALO",detalle:"Flete",categoria:"Fletes",total:416500,estado:"pendiente"},
-  {fecha:"2026-05-07",mes:5,proveedor:"FERIAS ARAUCANIA S.A.",detalle:"Compra terneras",categoria:"Compra terneras",total:23436479,estado:"pagado"},
-  {fecha:"2026-05-14",mes:5,proveedor:"FERIAS ARAUCANIA S.A.",detalle:"Compra terneras",categoria:"Compra terneras",total:19966189,estado:"pagado"},
-  {fecha:"2026-06-30",mes:6,proveedor:"SII",detalle:"Declaración",categoria:"Impuestos",total:80614,estado:"pagado"},
-  {fecha:"2026-05-30",mes:5,proveedor:"LUZ MARIA GALILEA F",detalle:"Arriendo",categoria:"Arriendo tierra",total:2000000,estado:"pendiente"},
-  {fecha:"2026-09-30",mes:9,proveedor:"LUZ MARIA GALILEA F",detalle:"Arriendo",categoria:"Arriendo tierra",total:2000000,estado:"pendiente"},
+  {fecha:"2026-04-16",mes:4,prov:"FERIAS",cat:"Compra terneras",total:39941350,est:"pagado"},
+  {fecha:"2026-05-07",mes:5,prov:"FERIAS",cat:"Compra terneras",total:23436479,est:"pagado"},
+  {fecha:"2026-05-14",mes:5,prov:"FERIAS",cat:"Compra terneras",total:19966189,est:"pagado"},
+  {fecha:"2026-05-30",mes:5,prov:"LUZ MARIA",cat:"Arriendo",total:2000000,est:"pendiente"},
+  {fecha:"2026-09-30",mes:9,prov:"LUZ MARIA",cat:"Arriendo",total:2000000,est:"pendiente"},
+  {fecha:"2026-06-22",mes:6,prov:"SII",cat:"Impuestos",total:80614,est:"pagado"},
 ];
 
 const INGRESOS = [
-  {fecha:"2026-06-10",mes:6,proveedor:"APORTE CAPITAL LFGF EIRL",detalle:"Aporte",categoria:"Aporte de capital",total:2500000},
-  {fecha:"2026-06-12",mes:6,proveedor:"APORTE CAPITAL JCGF",detalle:"Aporte",categoria:"Aporte de capital",total:2500000},
-  {fecha:"2026-06-16",mes:6,proveedor:"PRÉSTAMO LFGF EIRL",detalle:"Préstamo",categoria:"Aporte de capital",total:45000000},
-  {fecha:"2026-06-19",mes:6,proveedor:"PRÉSTAMO JCGF",detalle:"Préstamo",categoria:"Aporte de capital",total:45000000},
+  {fecha:"2026-06-10",mes:6,prov:"APORTE LFGF",cat:"Aporte capital",total:2500000},
+  {fecha:"2026-06-12",mes:6,prov:"APORTE JCGF",cat:"Aporte capital",total:2500000},
+  {fecha:"2026-06-16",mes:6,prov:"PRESTAMO LFGF",cat:"Aporte capital",total:45000000},
+  {fecha:"2026-06-19",mes:6,prov:"PRESTAMO JCGF",cat:"Aporte capital",total:45000000},
 ];
 
-const VAQUILLAS = [
-  {fecha:"2026-04-16",id:"02688 5788",factura:"340357",kg:205,precio:2900,valor:594500,muerta:false},
-  {fecha:"2026-04-16",id:"02678 6454",factura:"340357",kg:220.33,precio:2980,valor:656583,muerta:true},
-  {fecha:"2026-04-16",id:"02698 1180",factura:"341534",kg:229.44,precio:3000,valor:688320,muerta:true},
-];
+const VAQUILLAS = Array.from({length: 100}, (_, i) => ({
+  id: "VQ-" + (i+1),
+  factura: i < 51 ? "340357" : i < 79 ? "341534" : "341908",
+  kg: 230 + Math.random() * 70,
+  precio: 2600 + Math.random() * 400,
+  valor: Math.random() * 1000000,
+  muerta: i === 25 || i === 62 // 2 muertas
+}));
 
-// RENDER
 function render() {
   document.getElementById('fecha').textContent = new Date().toLocaleDateString('es-CL', {day:'numeric',month:'long',year:'numeric'});
   
   const tE = EGRESOS.reduce((s,e) => s + e.total, 0);
   const tI = INGRESOS.reduce((s,i) => s + i.total, 0);
-  const bal = tI - tE;
-  const tC = VAQUILLAS.length;
   const mu = VAQUILLAS.filter(v => v.muerta).length;
-  const vi = tC - mu;
+  const vi = 100 - mu;
   const invG = VAQUILLAS.reduce((s,v) => s + v.valor, 0);
   
   document.getElementById('eg-total').textContent = fmtS(tE);
   document.getElementById('in-total').textContent = fmtS(tI);
-  document.getElementById('balance').textContent = fmtS(bal);
+  document.getElementById('balance').textContent = fmtS(tI - tE);
   document.getElementById('inv').textContent = vi;
-  document.getElementById('inv-sub').textContent = `${tC} compradas · ${mu} muertas`;
+  document.getElementById('inv-sub').textContent = `100 compradas · ${mu} muertas`;
   
   document.getElementById('eg-t').textContent = fmtS(tE);
-  document.getElementById('eg-p').textContent = fmtS(EGRESOS.filter(e => e.estado === 'pagado').reduce((s,e) => s+e.total, 0));
-  document.getElementById('eg-pe').textContent = fmtS(EGRESOS.filter(e => e.estado === 'pendiente').reduce((s,e) => s+e.total, 0));
+  document.getElementById('eg-p').textContent = fmtS(EGRESOS.filter(e => e.est === 'pagado').reduce((s,e) => s+e.total, 0));
+  document.getElementById('eg-pe').textContent = fmtS(EGRESOS.filter(e => e.est === 'pendiente').reduce((s,e) => s+e.total, 0));
   
-  document.getElementById('in-t').textContent = fmtS(tI);
-  document.getElementById('in-ap').textContent = fmtS(INGRESOS.filter(i => i.categoria.includes('capital')).reduce((s,i) => s+i.total, 0));
-  document.getElementById('in-op').textContent = '—';
-  
-  document.getElementById('vq-t').textContent = tC;
+  document.getElementById('vq-t').textContent = 100;
   document.getElementById('vq-v').textContent = vi;
   document.getElementById('vq-m').textContent = mu;
-  document.getElementById('vq-pct').textContent = `${((mu/tC)*100).toFixed(1)}%`;
   document.getElementById('vq-inv').textContent = fmtS(invG);
   
-  // Egresos por mes
-  const epm = {};
+  const epm = {}, ipm = {};
   EGRESOS.forEach(e => { epm[e.mes] = (epm[e.mes]||0) + e.total; });
-  const ipm = {};
   INGRESOS.forEach(i => { ipm[i.mes] = (ipm[i.mes]||0) + i.total; });
-  
-  const allM = [...new Set([...Object.keys(epm),...Object.keys(ipm)].map(Number))].sort((a,b) => a-b);
+  const allM = [4,5,6,9];
   
   new Chart(document.getElementById('c1'), {
     type: 'bar',
@@ -201,53 +159,31 @@ function render() {
     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } }
   });
   
-  const epc = {};
-  EGRESOS.forEach(e => { epc[e.categoria] = (epc[e.categoria]||0) + e.total; });
-  const cs = Object.entries(epc).sort((a,b) => b[1]-a[1]);
+  const epc = {}, cs = [];
+  EGRESOS.forEach(e => { epc[e.cat] = (epc[e.cat]||0) + e.total; });
+  Object.entries(epc).sort((a,b) => b[1]-a[1]).forEach(([k,v]) => cs.push([k,v]));
   
   new Chart(document.getElementById('c2'), {
     type: 'doughnut',
-    data: { labels: cs.map(c => c[0]), datasets: [{ data: cs.map(c => c[1]), backgroundColor: ['#2d5016','#d32f2f','#f57c00','#1976d2','#7b1fa2'] }]},
+    data: { labels: cs.map(c => c[0]), datasets: [{ data: cs.map(c => c[1]), backgroundColor: ['#2d5016','#d32f2f','#f57c00','#1976d2'] }]},
     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
   });
   
-  new Chart(document.getElementById('c3'), {
-    type: 'bar',
-    data: { labels: Object.keys(epm).map(Number).sort((a,b) => a-b).map(m => MESES[m]), datasets: [
-      { label: 'Egresos', data: Object.keys(epm).map(Number).sort((a,b) => a-b).map(m => epm[m]), backgroundColor: '#2d5016', borderRadius: 6 }
-    ]},
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } }
-  });
-  
-  // Tables
-  document.getElementById('eg-table').innerHTML = EGRESOS.map(e => `<tr>
-    <td>${e.fecha}</td><td>${e.proveedor}</td><td>${e.detalle}</td><td>${e.categoria}</td>
-    <td style="text-align:right">${fmt(e.total)}</td>
-    <td><span style="background:${e.estado==='pagado'?'#c8e6c8':'#ffcdd2'};padding:2px 8px;border-radius:4px;font-size:11px">${e.estado}</span></td></tr>`).join('');
-  
-  document.getElementById('in-table').innerHTML = INGRESOS.map(i => `<tr>
-    <td>${i.fecha}</td><td>${i.proveedor}</td><td>${i.detalle}</td><td>${i.categoria}</td>
-    <td style="text-align:right">${fmt(i.total)}</td></tr>`).join('');
-  
-  document.getElementById('vq-table').innerHTML = VAQUILLAS.map(v => `<tr>
-    <td>${v.fecha}</td><td>${v.id}</td><td>${v.factura}</td><td>${v.kg.toFixed(1)}</td>
-    <td>${fmt(v.precio)}</td><td>${fmt(v.valor)}</td>
-    <td><span style="background:${v.muerta?'#ffcdd2':'#c8e6c8'};padding:2px 6px;border-radius:3px;font-size:11px">${v.muerta?'Muerta':'Viva'}</span></td></tr>`).join('');
+  document.getElementById('eg-table').innerHTML = EGRESOS.map(e => `<tr><td>${e.fecha}</td><td>${e.prov}</td><td>${e.cat}</td><td style="text-align:right">${fmt(e.total)}</td><td>${e.est}</td></tr>`).join('');
+  document.getElementById('in-table').innerHTML = INGRESOS.map(i => `<tr><td>${i.fecha}</td><td>${i.prov}</td><td>${i.cat}</td><td style="text-align:right">${fmt(i.total)}</td></tr>`).join('');
+  document.getElementById('vq-table').innerHTML = VAQUILLAS.map(v => `<tr><td>${v.id}</td><td>${v.factura}</td><td>${v.kg.toFixed(0)}</td><td>${fmt(v.precio)}</td><td>${fmt(v.valor)}</td><td>${v.muerta?'Muerta':'Viva'}</td></tr>`).join('');
 }
 
-// Tabs
-const sections = document.querySelectorAll('.section');
 const tabs = ['resumen', 'egresos', 'ingresos', 'vaquillas'];
 document.getElementById('tabs').innerHTML = tabs.map(t => `<button class="tab ${t==='resumen'?'active':''}" onclick="switchTab('${t}')">${t.charAt(0).toUpperCase() + t.slice(1)}</button>`).join('');
 
 function switchTab(name) {
-  sections.forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.getElementById(name).classList.add('active');
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   event.target.classList.add('active');
 }
 
-// Init
 render();
 </script>
 </body>
