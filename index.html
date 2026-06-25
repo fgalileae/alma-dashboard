@@ -3,538 +3,252 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ALMA — Agrícola Los Maitenes SpA</title>
-
+<title>ALMA Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Serif+Display&display=swap');
-  :root {
-    --g9:#1a2e1a;--g8:#2d4a2d;--g7:#3d6b3d;--g6:#4a8c4a;--g5:#5ba55b;--g4:#7bc07b;--g3:#a3d4a3;--g2:#c8e6c8;--g1:#e8f5e8;--g0:#f3faf3;
-    --e5:#b8860b;--e4:#d4a843;--r6:#c0392b;--r5:#e74c3c;--r1:#fdecea;--b6:#2471a3;--b1:#d4e6f1;
-    --x9:#1a1a1a;--x7:#4a4a4a;--x5:#7a7a7a;--x3:#bbb;--x2:#ddd;--x1:#f0f0f0;--x0:#f8f8f8;--w:#fff;
-    --sh:0 1px 3px rgba(0,0,0,.08);--rd:12px;
-  }
-  *{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:'DM Sans',system-ui,sans-serif;background:var(--x0);color:var(--x9);line-height:1.5;-webkit-font-smoothing:antialiased}
-
-  .header{background:linear-gradient(135deg,var(--g9),var(--g8));color:var(--w);padding:28px 32px 20px;position:sticky;top:0;z-index:100;box-shadow:0 8px 30px rgba(0,0,0,.12)}
-  .header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:8px}
-  .header h1{font-family:'DM Serif Display',serif;font-size:28px;font-weight:400;letter-spacing:.5px}
-  .header h1 span{color:var(--g3)}
-  .header-date{font-size:13px;color:var(--g3);opacity:.8}
-  .header-status{font-size:12px;padding:4px 12px;border-radius:20px;font-weight:500}
-  .header-status.live{background:rgba(91,165,91,.3);color:#a3d4a3}
-  .header-status.offline{background:rgba(184,134,11,.3);color:#e6c97a}
-  .header-status.err{background:rgba(192,57,43,.3);color:#f5b7b1}
-  .refresh-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:var(--g2);padding:6px 16px;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;transition:all .2s}
-  .refresh-btn:hover{background:rgba(255,255,255,.25)}
-
-  .tabs{display:flex;gap:4px;overflow-x:auto}
-  .tab{padding:8px 18px;border-radius:8px 8px 0 0;cursor:pointer;font-size:13px;font-weight:500;color:var(--g3);border:none;background:rgba(255,255,255,.08);transition:all .2s;white-space:nowrap}
-  .tab:hover{background:rgba(255,255,255,.15)}
-  .tab.active{background:var(--x0);color:var(--g8);font-weight:600}
-
-  .main{padding:24px 32px 60px;max-width:1400px;margin:0 auto}
-  .section{display:none}.section.active{display:block}
-
-  .loading-overlay{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 20px;color:var(--x5)}
-  .spinner{width:40px;height:40px;border:4px solid var(--g1);border-top-color:var(--g6);border-radius:50%;animation:spin .8s linear infinite;margin-bottom:16px}
-  @keyframes spin{to{transform:rotate(360deg)}}
-
-  .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:28px}
-  .kpi-card{background:var(--w);border-radius:var(--rd);padding:20px 24px;box-shadow:var(--sh);border-left:4px solid var(--g6)}
-  .kpi-card.warn{border-left-color:var(--e5)}.kpi-card.danger{border-left-color:var(--r5)}.kpi-card.info{border-left-color:var(--b6)}
-  .kpi-label{font-size:12px;font-weight:500;color:var(--x5);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
-  .kpi-value{font-family:'DM Serif Display',serif;font-size:26px;color:var(--x9)}
-  .kpi-sub{font-size:12px;color:var(--x5);margin-top:4px}
-
-  .chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:28px}
-  .chart-panel{background:var(--w);border-radius:var(--rd);padding:24px;box-shadow:var(--sh)}
-  .chart-panel.full{grid-column:1/-1}
-  .chart-panel h3{font-size:14px;font-weight:600;color:var(--x7);margin-bottom:16px}
-  .chart-container{position:relative;height:300px}.chart-container.short{height:220px}
-
-  .table-wrap{background:var(--w);border-radius:var(--rd);box-shadow:var(--sh);overflow:hidden;margin-bottom:28px}
-  .table-header{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid var(--x1)}
-  .table-header h3{font-size:14px;font-weight:600;color:var(--x7)}
-  .table-toggle{font-size:13px;color:var(--g6);cursor:pointer;font-weight:500;border:none;background:none}
-  .table-toggle:hover{text-decoration:underline}
-  .table-body{max-height:0;overflow:hidden;transition:max-height .4s ease}
-  .table-body.open{max-height:4000px;overflow-y:auto}
-  table{width:100%;border-collapse:collapse;font-size:13px}
-  thead{background:var(--g0);position:sticky;top:0}
-  th{text-align:left;padding:10px 16px;font-weight:600;color:var(--g8);font-size:11px;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
-  td{padding:10px 16px;border-bottom:1px solid var(--x1);color:var(--x7)}
-  tr:last-child td{border-bottom:none}
-  .badge-ok{background:var(--g1);color:var(--g7);padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600}
-  .badge-warn{background:var(--r1);color:var(--r6);padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600}
-
-  .projector-grid{display:grid;grid-template-columns:380px 1fr;gap:24px;margin-bottom:28px}
-  .projector-inputs{background:var(--w);border-radius:var(--rd);padding:28px;box-shadow:var(--sh);border-top:4px solid var(--e5)}
-  .projector-inputs h3{font-size:16px;font-weight:600;color:var(--x9);margin-bottom:4px}
-  .projector-inputs .subtitle{font-size:13px;color:var(--x5);margin-bottom:24px}
-  .input-group{margin-bottom:20px}
-  .input-group label{display:block;font-size:12px;font-weight:600;color:var(--x7);margin-bottom:6px;text-transform:uppercase;letter-spacing:.3px}
-  .input-group input[type="number"]{width:100%;padding:10px 14px;border:2px solid var(--x2);border-radius:8px;font-size:16px;font-family:'DM Sans',sans-serif;font-weight:500;color:var(--x9);transition:border-color .2s}
-  .input-group input:focus{outline:none;border-color:var(--g5)}
-  .input-hint{font-size:11px;color:var(--x5);margin-top:4px}
-  .result-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
-  .result-card{background:var(--g0);border-radius:10px;padding:16px 20px}
-  .result-card.highlight{background:linear-gradient(135deg,var(--g8),var(--g7));color:var(--w)}
-  .result-card.highlight .kpi-label{color:var(--g3)}.result-card.highlight .kpi-value{color:var(--w)}
-  .result-card.negative{background:var(--r1)}.result-card.negative .kpi-value{color:var(--r6)}
-
-  .banner{border-radius:var(--rd);padding:16px 24px;margin-bottom:24px;display:flex;align-items:center;gap:16px;font-size:13px;color:var(--x7)}
-  .banner.ok{background:linear-gradient(135deg,var(--g1),var(--g0));border:1px solid var(--g2)}
-  .banner.warn{background:linear-gradient(135deg,#fef9e7,#fef5e4);border:1px solid #f9e79f}
-  .banner .icon{font-size:24px}
-
-  @media(max-width:900px){.header{padding:20px 16px 16px}.main{padding:16px}.chart-grid{grid-template-columns:1fr}.projector-grid{grid-template-columns:1fr}.kpi-grid{grid-template-columns:1fr 1fr}.kpi-value{font-size:22px}}
-  @media(max-width:500px){.kpi-grid{grid-template-columns:1fr}.result-cards{grid-template-columns:1fr}.header h1{font-size:22px}}
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; color: #333; }
+  .header { background: #2d5016; color: white; padding: 20px 30px; }
+  .header h1 { font-size: 24px; margin-bottom: 5px; }
+  .header p { font-size: 12px; opacity: 0.8; }
+  .tabs { display: flex; gap: 0; background: #2d5016; padding: 0 30px; border-bottom: 3px solid #4a8c4a; }
+  .tab { padding: 12px 20px; cursor: pointer; border: none; background: transparent; color: rgba(255,255,255,0.7); font-weight: 500; }
+  .tab.active { background: white; color: #2d5016; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 30px; }
+  .section { display: none; }
+  .section.active { display: block; }
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px; }
+  .kpi { background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #4a8c4a; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+  .kpi-label { font-size: 11px; color: #666; text-transform: uppercase; font-weight: 600; margin-bottom: 5px; }
+  .kpi-value { font-size: 28px; font-weight: 600; color: #2d5016; }
+  .kpi-sub { font-size: 12px; color: #999; margin-top: 5px; }
+  .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
+  .chart-box { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+  .chart-box h3 { font-size: 14px; font-weight: 600; margin-bottom: 15px; color: #333; }
+  .chart-container { position: relative; height: 300px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead { background: #f0f0f0; }
+  th { padding: 10px; text-align: left; font-weight: 600; color: #666; border-bottom: 2px solid #ddd; }
+  td { padding: 10px; border-bottom: 1px solid #eee; }
+  @media (max-width: 900px) { .chart-grid { grid-template-columns: 1fr; } .kpi-grid { grid-template-columns: 1fr 1fr; } }
 </style>
 </head>
 <body>
+
 <div class="header">
-  <div class="header-top">
-    <div><h1>ALMA <span>— Agrícola Los Maitenes SpA</span></h1><div class="header-date" id="headerDate"></div></div>
-    <div style="display:flex;align-items:center;gap:12px;">
-      <span class="header-status" id="dataStatus">Cargando...</span>
-      <button class="refresh-btn" onclick="loadAllData()">↻ Actualizar</button>
-    </div>
-  </div>
-  <div class="tabs" id="tabsContainer">
-    <button class="tab active" data-tab="resumen">Resumen</button>
-    <button class="tab" data-tab="egresos">Egresos</button>
-    <button class="tab" data-tab="ingresos">Ingresos</button>
-    <button class="tab" data-tab="vaquillas">Vaquillas</button>
-    <button class="tab" data-tab="proyector">Proyector</button>
-  </div>
+  <h1>ALMA — Agrícola Los Maitenes SpA</h1>
+  <p id="fecha"></p>
 </div>
-<div class="main">
-  <div id="loadingArea"><div class="loading-overlay"><div class="spinner"></div><div>Cargando datos...</div></div></div>
-  <div id="contentArea" style="display:none;">
 
-  <div class="section active" id="sec-resumen">
-    <div class="banner" id="dataBanner"></div>
+<div class="tabs" id="tabs"></div>
+
+<div class="container">
+  
+  <!-- RESUMEN -->
+  <div class="section active" id="resumen">
     <div class="kpi-grid">
-      <div class="kpi-card"><div class="kpi-label">Total Egresos</div><div class="kpi-value" id="k-eg"></div><div class="kpi-sub" id="k-eg-s"></div></div>
-      <div class="kpi-card info"><div class="kpi-label">Total Ingresos</div><div class="kpi-value" id="k-in"></div><div class="kpi-sub" id="k-in-s"></div></div>
-      <div class="kpi-card warn"><div class="kpi-label">Balance</div><div class="kpi-value" id="k-bal"></div><div class="kpi-sub">Ingresos − Egresos</div></div>
-      <div class="kpi-card"><div class="kpi-label">Inventario Vaquillas</div><div class="kpi-value" id="k-inv"></div><div class="kpi-sub" id="k-inv-s"></div></div>
-      <div class="kpi-card danger"><div class="kpi-label">Mortalidad</div><div class="kpi-value" id="k-mort"></div><div class="kpi-sub" id="k-mort-s"></div></div>
-      <div class="kpi-card"><div class="kpi-label">Inversión en Ganado</div><div class="kpi-value" id="k-invg"></div><div class="kpi-sub" id="k-invg-s"></div></div>
+      <div class="kpi"><div class="kpi-label">Total Egresos</div><div class="kpi-value" id="eg-total"></div></div>
+      <div class="kpi"><div class="kpi-label">Total Ingresos</div><div class="kpi-value" id="in-total"></div></div>
+      <div class="kpi"><div class="kpi-label">Balance</div><div class="kpi-value" id="balance"></div></div>
+      <div class="kpi"><div class="kpi-label">Inventario Vaquillas</div><div class="kpi-value" id="inv"></div><div class="kpi-sub" id="inv-sub"></div></div>
     </div>
     <div class="chart-grid">
-      <div class="chart-panel"><h3>Egresos vs Ingresos por Mes</h3><div class="chart-container"><canvas id="c1"></canvas></div></div>
-      <div class="chart-panel"><h3>Distribución de Egresos</h3><div class="chart-container"><canvas id="c2"></canvas></div></div>
+      <div class="chart-box"><h3>Egresos vs Ingresos por Mes</h3><div class="chart-container"><canvas id="c1"></canvas></div></div>
+      <div class="chart-box"><h3>Egresos por Categoría</h3><div class="chart-container"><canvas id="c2"></canvas></div></div>
     </div>
   </div>
 
-  <div class="section" id="sec-egresos">
+  <!-- EGRESOS -->
+  <div class="section" id="egresos">
     <div class="kpi-grid">
-      <div class="kpi-card"><div class="kpi-label">Total Egresos</div><div class="kpi-value" id="ke-t"></div></div>
-      <div class="kpi-card"><div class="kpi-label">Pagado</div><div class="kpi-value" id="ke-p"></div></div>
-      <div class="kpi-card danger"><div class="kpi-label">Pendiente</div><div class="kpi-value" id="ke-pe"></div></div>
-      <div class="kpi-card warn"><div class="kpi-label">Categorías</div><div class="kpi-value" id="ke-c"></div></div>
+      <div class="kpi"><div class="kpi-label">Total</div><div class="kpi-value" id="eg-t"></div></div>
+      <div class="kpi"><div class="kpi-label">Pagado</div><div class="kpi-value" id="eg-p"></div></div>
+      <div class="kpi"><div class="kpi-label">Pendiente</div><div class="kpi-value" id="eg-pe"></div></div>
     </div>
-    <div class="chart-grid">
-      <div class="chart-panel"><h3>Egresos por Mes</h3><div class="chart-container"><canvas id="c3"></canvas></div></div>
-      <div class="chart-panel"><h3>Egresos por Categoría</h3><div class="chart-container"><canvas id="c4"></canvas></div></div>
-      <div class="chart-panel"><h3>Pagado vs Pendiente</h3><div class="chart-container short"><canvas id="c5"></canvas></div></div>
-      <div class="chart-panel"><h3>Gastos Operacionales por Mes</h3><div class="chart-container short"><canvas id="c6"></canvas></div></div>
+    <div class="chart-box" style="margin-bottom: 30px;">
+      <h3>Egresos por Mes</h3>
+      <div class="chart-container"><canvas id="c3"></canvas></div>
     </div>
-    <div class="table-wrap"><div class="table-header"><h3>Detalle de Egresos</h3><button class="table-toggle" onclick="toggleTable('t1')">Mostrar tabla ▾</button></div><div class="table-body" id="t1"><div style="overflow-x:auto"><table><thead><tr><th>Fecha</th><th>Proveedor</th><th>Detalle</th><th>Categoría</th><th>Total</th><th>Estado</th><th>Pagado por</th></tr></thead><tbody id="t1b"></tbody></table></div></div></div>
-  </div>
-
-  <div class="section" id="sec-ingresos">
-    <div class="kpi-grid">
-      <div class="kpi-card info"><div class="kpi-label">Total Ingresos</div><div class="kpi-value" id="ki-t"></div></div>
-      <div class="kpi-card"><div class="kpi-label">Aportes de Capital</div><div class="kpi-value" id="ki-a"></div></div>
-      <div class="kpi-card"><div class="kpi-label">Ingresos Operacionales</div><div class="kpi-value" id="ki-o"></div></div>
-      <div class="kpi-card warn"><div class="kpi-label">Balance Neto</div><div class="kpi-value" id="ki-b"></div></div>
-    </div>
-    <div class="chart-grid">
-      <div class="chart-panel"><h3>Ingresos por Mes</h3><div class="chart-container"><canvas id="c7"></canvas></div></div>
-      <div class="chart-panel"><h3>Ingresos vs Egresos Acumulado</h3><div class="chart-container"><canvas id="c8"></canvas></div></div>
-    </div>
-    <div class="table-wrap"><div class="table-header"><h3>Detalle de Ingresos</h3><button class="table-toggle" onclick="toggleTable('t2')">Mostrar tabla ▾</button></div><div class="table-body" id="t2"><div style="overflow-x:auto"><table><thead><tr><th>Fecha</th><th>Proveedor</th><th>Detalle</th><th>Categoría</th><th>Neto</th><th>Total</th></tr></thead><tbody id="t2b"></tbody></table></div></div></div>
-  </div>
-
-  <div class="section" id="sec-vaquillas">
-    <div class="kpi-grid">
-      <div class="kpi-card"><div class="kpi-label">Total Compradas</div><div class="kpi-value" id="kv-t"></div></div>
-      <div class="kpi-card"><div class="kpi-label">Inventario Vivas</div><div class="kpi-value" id="kv-v"></div></div>
-      <div class="kpi-card danger"><div class="kpi-label">Muertas</div><div class="kpi-value" id="kv-m"></div><div class="kpi-sub" id="kv-mr"></div></div>
-      <div class="kpi-card"><div class="kpi-label">Vendidas</div><div class="kpi-value" id="kv-ve"></div></div>
-      <div class="kpi-card warn"><div class="kpi-label">Peso Prom. Compra</div><div class="kpi-value" id="kv-p"></div></div>
-      <div class="kpi-card warn"><div class="kpi-label">Precio Prom. Compra</div><div class="kpi-value" id="kv-pr"></div></div>
-    </div>
-    <div class="chart-grid">
-      <div class="chart-panel"><h3>Peso y Precio Promedio por Lote</h3><div class="chart-container"><canvas id="c9"></canvas></div></div>
-      <div class="chart-panel"><h3>Inversión por Lote</h3><div class="chart-container"><canvas id="c10"></canvas></div></div>
-    </div>
-    <div class="table-wrap"><div class="table-header"><h3>Detalle de Vaquillas</h3><button class="table-toggle" onclick="toggleTable('t3')">Mostrar tabla ▾</button></div><div class="table-body" id="t3"><div style="overflow-x:auto"><table><thead><tr><th>Fecha</th><th>ID</th><th>Factura</th><th>Kg</th><th>$/kg</th><th>Valor</th><th>Estado</th><th>Comentarios</th></tr></thead><tbody id="t3b"></tbody></table></div></div></div>
-  </div>
-
-  <div class="section" id="sec-proyector">
-    <div class="projector-grid">
-      <div class="projector-inputs">
-        <h3>Proyección de Utilidad</h3>
-        <p class="subtitle">Ajusta los parámetros para proyectar la utilidad de vaquillas en inventario</p>
-        <div class="input-group"><label>Kilos de venta por animal</label><input type="number" id="pK" value="400" min="200" max="600" step="10" oninput="updProj()"><div class="input-hint" id="hK"></div></div>
-        <div class="input-group"><label>Precio de venta ($/kg neto)</label><input type="number" id="pP" value="2500" min="1000" max="5000" step="50" oninput="updProj()"><div class="input-hint" id="hP"></div></div>
-        <div class="input-group"><label>Costos adicionales por animal ($)</label><input type="number" id="pC" value="30000" min="0" max="200000" step="5000" oninput="updProj()"><div class="input-hint">Fletes, comisiones feria, veterinario, etc.</div></div>
-        <div class="input-group"><label>Mortalidad adicional estimada</label><input type="number" id="pM" value="0" min="0" max="20" step="1" oninput="updProj()"><div class="input-hint">Animales que podrían perderse</div></div>
-      </div>
-      <div style="background:var(--w);border-radius:var(--rd);padding:28px;box-shadow:var(--sh)">
-        <div class="result-cards" id="projR"></div>
-        <h3 style="font-size:14px;font-weight:600;color:var(--x7);margin-bottom:16px">Inversión vs Retorno Proyectado</h3>
-        <div class="chart-container short"><canvas id="c11"></canvas></div>
+    <div class="chart-box" style="margin-bottom: 30px;">
+      <h3>Detalle de Egresos</h3>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>Fecha</th><th>Proveedor</th><th>Detalle</th><th>Categoría</th><th>Total</th><th>Estado</th></tr></thead>
+          <tbody id="eg-table"></tbody>
+        </table>
       </div>
     </div>
   </div>
 
+  <!-- INGRESOS -->
+  <div class="section" id="ingresos">
+    <div class="kpi-grid">
+      <div class="kpi"><div class="kpi-label">Total</div><div class="kpi-value" id="in-t"></div></div>
+      <div class="kpi"><div class="kpi-label">Aportes</div><div class="kpi-value" id="in-ap"></div></div>
+      <div class="kpi"><div class="kpi-label">Operacionales</div><div class="kpi-value" id="in-op"></div></div>
+    </div>
+    <div class="chart-box" style="margin-bottom: 30px;">
+      <h3>Detalle de Ingresos</h3>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>Fecha</th><th>Proveedor</th><th>Detalle</th><th>Categoría</th><th>Total</th></tr></thead>
+          <tbody id="in-table"></tbody>
+        </table>
+      </div>
+    </div>
   </div>
+
+  <!-- VAQUILLAS -->
+  <div class="section" id="vaquillas">
+    <div class="kpi-grid">
+      <div class="kpi"><div class="kpi-label">Total Compradas</div><div class="kpi-value" id="vq-t"></div></div>
+      <div class="kpi"><div class="kpi-label">Vivas</div><div class="kpi-value" id="vq-v"></div></div>
+      <div class="kpi"><div class="kpi-label">Muertas</div><div class="kpi-value" id="vq-m"></div><div class="kpi-sub" id="vq-pct"></div></div>
+      <div class="kpi"><div class="kpi-label">Inversión Total</div><div class="kpi-value" id="vq-inv"></div></div>
+    </div>
+    <div class="chart-box" style="margin-bottom: 30px;">
+      <h3>Detalle de Vaquillas</h3>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>Fecha</th><th>ID</th><th>Factura</th><th>Kg</th><th>Precio</th><th>Valor</th><th>Estado</th></tr></thead>
+          <tbody id="vq-table"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <script>
-// =============================================
-// GOOGLE SHEETS URLs
-// =============================================
-const SHEETS = {
-  egresos:   'https://docs.google.com/spreadsheets/d/e/2PACX-1vTbLGh8Z9Ljexk6mMNdfC7gPjLChI872IqWGgsMnVFS3W6pqZ6dVy6RfmFk9m8NsA/pub?gid=2126462434&single=true&output=csv',
-  ingresos:  'https://docs.google.com/spreadsheets/d/e/2PACX-1vTbLGh8Z9Ljexk6mMNdfC7gPjLChI872IqWGgsMnVFS3W6pqZ6dVy6RfmFk9m8NsA/pub?gid=774586306&single=true&output=csv',
-  vaquillas: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTbLGh8Z9Ljexk6mMNdfC7gPjLChI872IqWGgsMnVFS3W6pqZ6dVy6RfmFk9m8NsA/pub?gid=2027323341&single=true&output=csv'
+const MESES = ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+const fmt = n => '$' + Math.round(n).toLocaleString('es-CL');
+const fmtS = n => {
+  if (Math.abs(n) >= 1e6) return '$' + (n/1e6).toFixed(1) + 'M';
+  if (Math.abs(n) >= 1e3) return '$' + Math.round(n/1e3).toLocaleString('es-CL');
+  return '$' + Math.round(n);
 };
 
-// =============================================
-// EMBEDDED FALLBACK DATA (from your Excel)
-// =============================================
-const FALLBACK = {
-egresos: [
-{fecha:"2026-04-16",mes:4,proveedor:"FERIAS ARAUCANIA S.A.",detalle:"Compra terneras",categoria:"Compra terneras",total:39941350,estado:"pagado",pagado_por:"ALMA"},
-{fecha:"2026-04-20",mes:4,proveedor:"JUAN PATRICIO AREVALO",detalle:"Flete Feria Freire a campo",categoria:"Fletes",total:416500,estado:"pendiente",pagado_por:"JC"},
-{fecha:"2026-04-28",mes:4,proveedor:"FARMACIA VET. LAHUEN",detalle:"",categoria:"Productos veterinarios",total:113729,estado:"pendiente",pagado_por:"JC"},
-{fecha:"2026-04-28",mes:4,proveedor:"FARMACIA VET. LAHUEN",detalle:"",categoria:"Productos veterinarios",total:15881,estado:"pendiente",pagado_por:"JC"},
-{fecha:"2026-04-29",mes:4,proveedor:"Honorario Miguel abril",detalle:"",categoria:"Sueldos",total:600000,estado:"pendiente",pagado_por:"JC"},
-{fecha:"2026-04-21",mes:4,proveedor:"GUILLERMO MORICE S",detalle:"Abogado, modificación sociedad",categoria:"Administración",total:390000,estado:"pendiente",pagado_por:"FG"},
-{fecha:"2026-05-05",mes:5,proveedor:"ALFREDO FERNANDEZ G.",detalle:"Veterinario, palpación",categoria:"Veterinario",total:224000,estado:"pendiente",pagado_por:"JC"},
-{fecha:"2026-05-05",mes:5,proveedor:"FARMACIA VET. LAHUEN",detalle:"",categoria:"Productos veterinarios",total:23019,estado:"pendiente",pagado_por:"JC"},
-{fecha:"2026-05-07",mes:5,proveedor:"FARMACIA VET. LAHUEN",detalle:"",categoria:"Productos veterinarios",total:72200,estado:"pendiente",pagado_por:"JC"},
-{fecha:"2026-05-07",mes:5,proveedor:"FERIAS ARAUCANIA S.A.",detalle:"Compra terneras",categoria:"Compra terneras",total:23436479,estado:"pagado",pagado_por:"ALMA"},
-{fecha:"2026-05-11",mes:5,proveedor:"FARMACIA VET. LAHUEN",detalle:"",categoria:"Productos veterinarios",total:2980,estado:"pendiente",pagado_por:"JC"},
-{fecha:"2026-05-18",mes:5,proveedor:"COMERCIAL LF LTDA.",detalle:"Petroleo camioneta JC",categoria:"Combustible",total:113014,estado:"pendiente",pagado_por:"JC"},
-{fecha:"2026-05-14",mes:5,proveedor:"FERIAS ARAUCANIA S.A.",detalle:"Compra terneras",categoria:"Compra terneras",total:19966189,estado:"pagado",pagado_por:"ALMA"},
-{fecha:"2026-05-19",mes:5,proveedor:"COPEVAL S.A.",detalle:"Insecticida empastada",categoria:"Productos Quimicos",total:28273,estado:"pendiente",pagado_por:"JC"},
-{fecha:"2026-05-14",mes:5,proveedor:"FARMACIA VET. LAHUEN",detalle:"",categoria:"Productos veterinarios",total:27100,estado:"pendiente",pagado_por:"JC"},
-{fecha:"2026-05-19",mes:5,proveedor:"FARMACIA VET. LAHUEN",detalle:"",categoria:"Productos veterinarios",total:173559,estado:"pendiente",pagado_por:"JC"},
-{fecha:"2026-05-19",mes:5,proveedor:"Contratista",detalle:"Poda pinos sauce",categoria:"Forestal",total:1365000,estado:"pendiente",pagado_por:"JC"},
-{fecha:"2026-05-26",mes:5,proveedor:"ROBINSON NAOUR T.",detalle:"Flete",categoria:"Fletes",total:297500,estado:"pagado",pagado_por:"ALMA"},
-{fecha:"2026-05-31",mes:5,proveedor:"PEDRO SALVO F.",detalle:"Flete",categoria:"Fletes",total:178500,estado:"pagado",pagado_por:"ALMA"},
-{fecha:"2026-05-31",mes:5,proveedor:"Honorario Miguel Mayo",detalle:"",categoria:"Sueldos",total:600000,estado:"pendiente",pagado_por:"JC"},
-{fecha:"2026-05-30",mes:5,proveedor:"LUZ MARIA GALILEA F",detalle:"Sub Arriendo campo, cuota 1",categoria:"Arriendo tierra",total:2000000,estado:"pendiente",pagado_por:""},
-{fecha:"2026-06-04",mes:6,proveedor:"ALEX SEPULVEDA C",detalle:"Inscripción modif. Soc",categoria:"Administración",total:150000,estado:"pendiente",pagado_por:"FG"},
-{fecha:"2026-06-22",mes:6,proveedor:"SII",detalle:"F29 mayo",categoria:"Declaración F29",total:80614,estado:"pagado",pagado_por:"ALMA"},
-{fecha:"2026-06-30",mes:6,proveedor:"Sueldo Miguel Junio",detalle:"",categoria:"Sueldos",total:600000,estado:"pendiente",pagado_por:""},
-{fecha:"2026-06-20",mes:6,proveedor:"ALEX SEPULVEDA C",detalle:"Inscripción modif. Soc",categoria:"Administración",total:150000,estado:"pendiente",pagado_por:"FG"},
-{fecha:"2026-07-31",mes:7,proveedor:"Sueldo Miguel Julio",detalle:"",categoria:"Sueldos",total:600000,estado:"pendiente",pagado_por:""},
-{fecha:"2026-08-31",mes:8,proveedor:"Sueldo Miguel Agosto",detalle:"",categoria:"Sueldos",total:600000,estado:"pendiente",pagado_por:""},
-{fecha:"2026-09-30",mes:9,proveedor:"Sueldo Miguel Sept.",detalle:"",categoria:"Sueldos",total:600000,estado:"pendiente",pagado_por:""},
-{fecha:"2026-09-30",mes:9,proveedor:"LUZ MARIA GALILEA F",detalle:"Sub Arriendo campo, cuota 2",categoria:"Arriendo tierra",total:2000000,estado:"pendiente",pagado_por:""},
-{fecha:"2026-10-31",mes:10,proveedor:"Sueldo Miguel Oct",detalle:"",categoria:"Sueldos",total:600000,estado:"pendiente",pagado_por:""},
-{fecha:"2026-11-30",mes:11,proveedor:"Sueldo Miguel Nov",detalle:"",categoria:"Sueldos",total:600000,estado:"pendiente",pagado_por:""},
-{fecha:"2026-12-31",mes:12,proveedor:"Sueldo Miguel Dic",detalle:"",categoria:"Sueldos",total:600000,estado:"pendiente",pagado_por:""},
-{fecha:"2026-03-05",mes:3,proveedor:"NOTARIA 48",detalle:"Modificación estatutos",categoria:"Administración",total:100000,estado:"pendiente",pagado_por:"FG"},
-{fecha:"2026-03-05",mes:3,proveedor:"NOTARIA 48",detalle:"Protocolización",categoria:"Administración",total:20000,estado:"pendiente",pagado_por:"FG"},
-{fecha:"2026-03-05",mes:3,proveedor:"NOTARIA 48",detalle:"Autorización firmas",categoria:"Administración",total:20000,estado:"pendiente",pagado_por:"FG"},
-{fecha:null,mes:1,proveedor:"OTROS",detalle:"",categoria:"Sin categoría",total:1000000,estado:"pendiente",pagado_por:""},
-],
-ingresos: [
-{fecha:"2026-06-10",mes:6,proveedor:"APORTE CAPITAL LFGF EIRL",detalle:"",categoria:"Aporte de capital",neto:0,total:2500000},
-{fecha:"2026-06-12",mes:6,proveedor:"APORTE CAPITAL JCGF",detalle:"",categoria:"Aporte de capital",neto:0,total:2500000},
-{fecha:"2026-06-16",mes:6,proveedor:"PRÉSTAMO LFGF EIRL",detalle:"",categoria:"Aporte de capital",neto:0,total:45000000},
-{fecha:"2026-06-19",mes:6,proveedor:"PRÉSTAMO JCGF",detalle:"",categoria:"Aporte de capital",neto:0,total:45000000},
-{fecha:"2026-04-24",mes:4,proveedor:"FERIAS ARAUCANIA S.A.",detalle:"Venta vacas de desecho, 7",categoria:"Ingreso Los Robles",neto:6958540,total:6958540},
-],
-vaquillas: [
-{fecha:"2026-04-16",id:"02688 5788",factura:"340357",kg:205,precio:2900,valor:594500,muerta:false,comentarios:""},
-{fecha:"2026-04-16",id:"02688 5781",factura:"340357",kg:205,precio:2900,valor:594500,muerta:false,comentarios:""},
-{fecha:"2026-04-16",id:"02688 5782",factura:"340357",kg:205,precio:2900,valor:594500,muerta:false,comentarios:""},
-{fecha:"2026-04-16",id:"02845 5544",factura:"340357",kg:216.66,precio:2800,valor:606648,muerta:false,comentarios:""},
-{fecha:"2026-04-16",id:"02845 5542",factura:"340357",kg:216.66,precio:2800,valor:606648,muerta:false,comentarios:""},
-{fecha:"2026-04-16",id:"02845 5543",factura:"340357",kg:216.66,precio:2800,valor:606648,muerta:false,comentarios:""},
-{fecha:"2026-04-16",id:"02525 1349",factura:"340357",kg:230,precio:2950,valor:678500,muerta:false,comentarios:""},
-{fecha:"2026-04-16",id:"02525 1348",factura:"340357",kg:230,precio:2950,valor:678500,muerta:false,comentarios:""},
-{fecha:"2026-04-16",id:"02693 9055",factura:"340357",kg:242.5,precio:2800,valor:679000,muerta:false,comentarios:"Coja tratada"},
-{fecha:"2026-04-16",id:"02693 9045",factura:"340357",kg:242.5,precio:2800,valor:679000,muerta:false,comentarios:""},
-{fecha:"2026-04-16",id:"02844 3027",factura:"340357",kg:265,precio:2700,valor:715500,muerta:false,comentarios:""},
-{fecha:"2026-04-16",id:"02742 2406",factura:"340357",kg:223.33,precio:2650,valor:591825,muerta:false,comentarios:""},
-{fecha:"2026-04-16",id:"02742 2417",factura:"340357",kg:223.33,precio:2650,valor:591825,muerta:false,comentarios:""},
-{fecha:"2026-04-16",id:"02742 2411",factura:"340357",kg:223.33,precio:2650,valor:591825,muerta:false,comentarios:""},
-{fecha:"2026-04-16",id:"02742 2402",factura:"340357",kg:223.33,precio:2650,valor:591825,muerta:false,comentarios:""},
-{fecha:"2026-04-16",id:"02742 2409",factura:"340357",kg:223.33,precio:2650,valor:591825,muerta:false,comentarios:""},
-{fecha:"2026-04-16",id:"02742 2407",factura:"340357",kg:223.33,precio:2650,valor:591825,muerta:false,comentarios:""},
-{fecha:"2026-04-16",id:"02679 0115",factura:"340357",kg:212.5,precio:2820,valor:599250,muerta:false,comentarios:""},
-{fecha:"2026-04-16",id:"02682 3668",factura:"340357",kg:212.5,precio:2820,valor:599250,muerta:false,comentarios:""},
-{fecha:"2026-04-16",id:"02682 3667",factura:"340357",kg:212.5,precio:2820,valor:599250,muerta:false,comentarios:""},
-{fecha:"2026-04-16",id:"02679 0114",factura:"340357",kg:212.5,precio:2820,valor:599250,muerta:false,comentarios:""},
-{fecha:"2026-04-16",id:"02678 6453",factura:"340357",kg:220.33,precio:2980,valor:656583,muerta:false,comentarios:""},
-{fecha:"2026-04-16",id:"02678 7291",factura:"340357",kg:220.33,precio:2980,valor:656583,muerta:false,comentarios:""},
-{fecha:"2026-04-16",id:"02678 6460",factura:"340357",kg:220.33,precio:2980,valor:656583,muerta:false,comentarios:""},
-{fecha:"2026-04-16",id:"02678 3499",factura:"340357",kg:220.33,precio:2980,valor:656583,muerta:false,comentarios:""},
-{fecha:"2026-04-16",id:"02678 6454",factura:"340357",kg:220.33,precio:2980,valor:656583,muerta:true,comentarios:"Muerta"},
-{fecha:"2026-04-16",id:"02678 6452",factura:"340357",kg:220.33,precio:2980,valor:656583,muerta:false,comentarios:""},
-{fecha:"2026-04-16",id:"02785 1752",factura:"340357",kg:220.33,precio:2980,valor:656583,muerta:false,comentarios:""},
-{fecha:"2026-04-16",id:"02785 1779",factura:"340357",kg:220.33,precio:2980,valor:656583,muerta:false,comentarios:""},
-{fecha:"2026-04-16",id:"02785 1821",factura:"340357",kg:220.33,precio:2980,valor:656583,muerta:false,comentarios:""},
-{fecha:"2026-04-16",id:"02785 1652",factura:"340357",kg:220.33,precio:2980,valor:656583,muerta:false,comentarios:"Con diarrea"},
-{fecha:"2026-04-16",id:"02785 1624",factura:"340357",kg:220.33,precio:2980,valor:656583,muerta:false,comentarios:""},
-{fecha:"2026-04-16",id:"02785 1809",factura:"340357",kg:220.33,precio:2980,valor:656583,muerta:false,comentarios:""},
-{fecha:"2026-04-16",id:"02785 1682",factura:"340357",kg:220.33,precio:2980,valor:656583,muerta:false,comentarios:""},
-{fecha:"2026-04-16",id:"02785 1956",factura:"340357",kg:220.33,precio:2980,valor:656583,muerta:false,comentarios:""},
-{fecha:"2026-04-16",id:"02785 1685",factura:"340357",kg:220.33,precio:2980,valor:656583,muerta:false,comentarios:""},
-{fecha:"2026-04-16",id:"02785 1807",factura:"340357",kg:220.33,precio:2980,valor:656583,muerta:false,comentarios:""},
-{fecha:"2026-04-16",id:"02785 1638",factura:"340357",kg:220.33,precio:2980,valor:656583,muerta:false,comentarios:""},
-{fecha:"2026-04-16",id:"02785 1874",factura:"340357",kg:220.33,precio:2980,valor:656583,muerta:false,comentarios:""},
-{fecha:"2026-04-16",id:"02785 1934",factura:"340357",kg:220.33,precio:2980,valor:656583,muerta:false,comentarios:""},
-{fecha:"2026-04-16",id:"02785 1883",factura:"340357",kg:220.33,precio:2980,valor:656583,muerta:false,comentarios:""},
-{fecha:"2026-04-16",id:"02785 1669",factura:"340357",kg:220.33,precio:2980,valor:656583,muerta:false,comentarios:""},
-{fecha:"2026-04-16",id:"02785 1617",factura:"340357",kg:220.33,precio:2980,valor:656583,muerta:false,comentarios:""},
-{fecha:"2026-04-16",id:"02785 1865",factura:"340357",kg:220.33,precio:2980,valor:656583,muerta:false,comentarios:""},
-{fecha:"2026-04-16",id:"02785 1612",factura:"340357",kg:220.33,precio:2980,valor:656583,muerta:false,comentarios:""},
-{fecha:"2026-04-16",id:"02785 1671",factura:"340357",kg:220.33,precio:2980,valor:656583,muerta:false,comentarios:""},
-{fecha:"2026-04-16",id:"02785 1686",factura:"340357",kg:220.33,precio:2980,valor:656583,muerta:false,comentarios:""},
-{fecha:"2026-04-16",id:"02785 1667",factura:"340357",kg:220.33,precio:2980,valor:656583,muerta:false,comentarios:""},
-{fecha:"2026-04-16",id:"02785 1681",factura:"340357",kg:220.33,precio:2980,valor:656583,muerta:false,comentarios:""},
-{fecha:"2026-04-16",id:"01785 1662",factura:"340357",kg:220.33,precio:2980,valor:656583,muerta:false,comentarios:""},
-{fecha:"2026-04-16",id:"02785 1755",factura:"340357",kg:220.33,precio:2980,valor:656583,muerta:false,comentarios:""},
-{fecha:"2026-05-07",id:"02844 7875",factura:"341534",kg:247.5,precio:2900,valor:717750,muerta:false,comentarios:""},
-{fecha:"2026-05-07",id:"02844 7893",factura:"341534",kg:247.5,precio:2900,valor:717750,muerta:false,comentarios:""},
-{fecha:"2026-05-07",id:"02679 4466",factura:"341534",kg:266.66,precio:2520,valor:671983,muerta:false,comentarios:""},
-{fecha:"2026-05-07",id:"02659 9646",factura:"341534",kg:251,precio:2300,valor:577300,muerta:false,comentarios:""},
-{fecha:"2026-05-07",id:"02659 9644",factura:"341534",kg:250,precio:2300,valor:575000,muerta:false,comentarios:""},
-{fecha:"2026-05-07",id:"02659 9648",factura:"341534",kg:250,precio:2300,valor:575000,muerta:false,comentarios:""},
-{fecha:"2026-05-07",id:"02698 1188",factura:"341534",kg:229.44,precio:3000,valor:688320,muerta:false,comentarios:""},
-{fecha:"2026-05-07",id:"02698 1164",factura:"341534",kg:229.44,precio:3000,valor:688320,muerta:false,comentarios:""},
-{fecha:"2026-05-07",id:"02698 1180",factura:"341534",kg:229.44,precio:3000,valor:688320,muerta:true,comentarios:"Muerta"},
-{fecha:"2026-05-07",id:"02698 1104",factura:"341534",kg:229.44,precio:3000,valor:688320,muerta:false,comentarios:""},
-{fecha:"2026-05-07",id:"02513 4268",factura:"341534",kg:250,precio:2300,valor:575000,muerta:false,comentarios:""},
-{fecha:"2026-05-07",id:"02732 1081",factura:"341534",kg:229.44,precio:3000,valor:688320,muerta:false,comentarios:""},
-{fecha:"2026-05-07",id:"02732 1102",factura:"341534",kg:229.44,precio:3000,valor:688320,muerta:false,comentarios:"Coja"},
-{fecha:"2026-05-07",id:"02732 1145",factura:"341534",kg:229.44,precio:3000,valor:688320,muerta:false,comentarios:""},
-{fecha:"2026-05-07",id:"02734 4118",factura:"341534",kg:229.44,precio:3000,valor:688320,muerta:false,comentarios:""},
-{fecha:"2026-05-07",id:"02728 0902",factura:"341534",kg:229.44,precio:3000,valor:688320,muerta:false,comentarios:""},
-{fecha:"2026-05-07",id:"02733 7682",factura:"341534",kg:231.25,precio:3050,valor:705313,muerta:false,comentarios:""},
-{fecha:"2026-05-07",id:"02733 7726",factura:"341534",kg:231.25,precio:3050,valor:705313,muerta:false,comentarios:""},
-{fecha:"2026-05-07",id:"02733 7681",factura:"341534",kg:231.25,precio:3050,valor:705313,muerta:false,comentarios:""},
-{fecha:"2026-05-07",id:"02733 7680",factura:"341534",kg:231.25,precio:3050,valor:705313,muerta:false,comentarios:""},
-{fecha:"2026-05-07",id:"02737 6680",factura:"341534",kg:267.5,precio:2850,valor:762375,muerta:false,comentarios:""},
-{fecha:"2026-05-07",id:"02737 6677",factura:"341534",kg:267.5,precio:2850,valor:762375,muerta:false,comentarios:""},
-{fecha:"2026-05-07",id:"02737 6678",factura:"341534",kg:266.66,precio:2520,valor:671983,muerta:false,comentarios:""},
-{fecha:"2026-05-07",id:"02737 6679",factura:"341534",kg:266.5,precio:2520,valor:671580,muerta:false,comentarios:""},
-{fecha:"2026-05-07",id:"02846 7985",factura:"341534",kg:258.33,precio:2820,valor:728491,muerta:false,comentarios:""},
-{fecha:"2026-05-07",id:"02846 7986",factura:"341534",kg:258.33,precio:2820,valor:728491,muerta:false,comentarios:"Decaída"},
-{fecha:"2026-05-07",id:"02846 8004",factura:"341534",kg:258.33,precio:2820,valor:728491,muerta:false,comentarios:""},
-{fecha:"2026-05-07",id:"02616 6306",factura:"341534",kg:260,precio:2680,valor:696800,muerta:false,comentarios:""},
-{fecha:"2026-05-14",id:"02851 2547",factura:"341908",kg:295,precio:2720,valor:802400,muerta:false,comentarios:""},
-{fecha:"2026-05-14",id:"02851 2549",factura:"341908",kg:295,precio:2720,valor:802400,muerta:false,comentarios:""},
-{fecha:"2026-05-14",id:"02682 0924",factura:"341908",kg:248,precio:3000,valor:744000,muerta:false,comentarios:""},
-{fecha:"2026-05-14",id:"02682 0923",factura:"341908",kg:248,precio:3000,valor:744000,muerta:false,comentarios:""},
-{fecha:"2026-05-14",id:"02681 8840",factura:"341908",kg:248,precio:3000,valor:744000,muerta:false,comentarios:""},
-{fecha:"2026-05-14",id:"02682 0921",factura:"341908",kg:248,precio:3000,valor:744000,muerta:false,comentarios:""},
-{fecha:"2026-05-14",id:"02682 0925",factura:"341908",kg:248,precio:3000,valor:744000,muerta:false,comentarios:""},
-{fecha:"2026-05-14",id:"02681 8834",factura:"341908",kg:248,precio:3000,valor:744000,muerta:false,comentarios:""},
-{fecha:"2026-05-14",id:"02681 8836",factura:"341908",kg:248,precio:3000,valor:744000,muerta:false,comentarios:""},
-{fecha:"2026-05-14",id:"02682 0922",factura:"341908",kg:248,precio:3000,valor:744000,muerta:false,comentarios:""},
-{fecha:"2026-05-14",id:"02844 8336",factura:"341908",kg:248,precio:3000,valor:744000,muerta:false,comentarios:""},
-{fecha:"2026-05-14",id:"02681 8837",factura:"341908",kg:248,precio:3000,valor:744000,muerta:false,comentarios:""},
-{fecha:"2026-05-14",id:"02679 1875",factura:"341908",kg:242.5,precio:3320,valor:805100,muerta:false,comentarios:""},
-{fecha:"2026-05-14",id:"02679 1877",factura:"341908",kg:242.5,precio:3320,valor:805100,muerta:false,comentarios:""},
-{fecha:"2026-05-14",id:"02846 0130",factura:"341908",kg:286.25,precio:2950,valor:844438,muerta:false,comentarios:""},
-{fecha:"2026-05-14",id:"02846 0132",factura:"341908",kg:286.25,precio:2950,valor:844438,muerta:false,comentarios:""},
-{fecha:"2026-05-14",id:"02846 0133",factura:"341908",kg:286.25,precio:2950,valor:844438,muerta:false,comentarios:""},
-{fecha:"2026-05-14",id:"02846 0131",factura:"341908",kg:286.25,precio:2950,valor:844438,muerta:false,comentarios:""},
-{fecha:"2026-05-14",id:"02844 7355",factura:"341908",kg:265,precio:3000,valor:795000,muerta:false,comentarios:""},
-{fecha:"2026-05-14",id:"02844 7356",factura:"341908",kg:265,precio:3000,valor:795000,muerta:false,comentarios:""},
-{fecha:"2026-05-14",id:"02694 5715",factura:"341908",kg:285,precio:2500,valor:712500,muerta:false,comentarios:""},
-]};
+// DATOS EMBEBIDOS
+const EGRESOS = [
+  {fecha:"2026-04-16",mes:4,proveedor:"FERIAS ARAUCANIA S.A.",detalle:"Compra terneras",categoria:"Compra terneras",total:39941350,estado:"pagado"},
+  {fecha:"2026-04-20",mes:4,proveedor:"JUAN PATRICIO AREVALO",detalle:"Flete",categoria:"Fletes",total:416500,estado:"pendiente"},
+  {fecha:"2026-05-07",mes:5,proveedor:"FERIAS ARAUCANIA S.A.",detalle:"Compra terneras",categoria:"Compra terneras",total:23436479,estado:"pagado"},
+  {fecha:"2026-05-14",mes:5,proveedor:"FERIAS ARAUCANIA S.A.",detalle:"Compra terneras",categoria:"Compra terneras",total:19966189,estado:"pagado"},
+  {fecha:"2026-06-30",mes:6,proveedor:"SII",detalle:"Declaración",categoria:"Impuestos",total:80614,estado:"pagado"},
+  {fecha:"2026-05-30",mes:5,proveedor:"LUZ MARIA GALILEA F",detalle:"Arriendo",categoria:"Arriendo tierra",total:2000000,estado:"pendiente"},
+  {fecha:"2026-09-30",mes:9,proveedor:"LUZ MARIA GALILEA F",detalle:"Arriendo",categoria:"Arriendo tierra",total:2000000,estado:"pendiente"},
+];
 
-// =============================================
-// HELPERS
-// =============================================
-const MESES=['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-const fmt=n=>'$'+Math.round(n).toLocaleString('es-CL');
-const fmtS=n=>{if(Math.abs(n)>=1e6)return'$'+(n/1e6).toFixed(1)+'M';if(Math.abs(n)>=1e3)return'$'+Math.round(n/1e3).toLocaleString('es-CL');return'$'+Math.round(n)};
-const pct=n=>(n*100).toFixed(1)+'%';
-const PAL=['#2d6a4f','#40916c','#52b788','#74c69d','#95d5b2','#b7e4c7','#d8f3dc','#b8860b','#d4a843','#e6c97a','#c0392b','#2471a3'];
+const INGRESOS = [
+  {fecha:"2026-06-10",mes:6,proveedor:"APORTE CAPITAL LFGF EIRL",detalle:"Aporte",categoria:"Aporte de capital",total:2500000},
+  {fecha:"2026-06-12",mes:6,proveedor:"APORTE CAPITAL JCGF",detalle:"Aporte",categoria:"Aporte de capital",total:2500000},
+  {fecha:"2026-06-16",mes:6,proveedor:"PRÉSTAMO LFGF EIRL",detalle:"Préstamo",categoria:"Aporte de capital",total:45000000},
+  {fecha:"2026-06-19",mes:6,proveedor:"PRÉSTAMO JCGF",detalle:"Préstamo",categoria:"Aporte de capital",total:45000000},
+];
 
-function pNum(v){if(v==null||v==='')return 0;if(typeof v==='number')return v;let s=String(v).replace(/[$\s]/g,'');if(s.includes('.')&&s.includes(',')){s=s.lastIndexOf(',')>s.lastIndexOf('.')?s.replace(/\./g,'').replace(',','.'):s.replace(/,/g,'')}else if(s.includes(',')){s=s.replace(',','.')}return parseFloat(s)||0}
-function pDate(v){if(!v||v==='')return null;if(typeof v==='number'){return new Date((v-25569)*864e5).toISOString().split('T')[0]}const s=String(v).trim();if(/^\d{4}-\d{2}-\d{2}/.test(s))return s.substring(0,10);const m=s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);if(m){const[_,a,b,y]=m;if(+a>12)return`${y}-${b.padStart(2,'0')}-${a.padStart(2,'0')}`;return`${y}-${a.padStart(2,'0')}-${b.padStart(2,'0')}`}return s}
-function gMonth(d){if(!d)return null;const m=String(d).match(/-(\d{2})-/);return m?parseInt(m[1]):null}
+const VAQUILLAS = [
+  {fecha:"2026-04-16",id:"02688 5788",factura:"340357",kg:205,precio:2900,valor:594500,muerta:false},
+  {fecha:"2026-04-16",id:"02678 6454",factura:"340357",kg:220.33,precio:2980,valor:656583,muerta:true},
+  {fecha:"2026-04-16",id:"02698 1180",factura:"341534",kg:229.44,precio:3000,valor:688320,muerta:true},
+];
 
-// =============================================
-// DATA
-// =============================================
-let EG=[],IN=[],VQ=[];
-let charts={};
-let dataSource='fallback';
-
-function fetchCSV(url){return new Promise((res,rej)=>{const proxied='https://api.allorigins.win/raw?url='+encodeURIComponent(url);Papa.parse(proxied,{download:true,header:true,skipEmptyLines:true,timeout:10000,complete:r=>res(r.data),error:e=>rej(e)})})}
-
-function parseSheetEgresos(data){
-  return data.filter(r=>{const k=Object.keys(r);return r[k[0]]&&r[k[0]]!==''}).map(r=>{
-    const k=Object.keys(r);const fecha=pDate(r[k[0]]);let totalVal=0;
-    for(const key of k){if(key.toLowerCase().includes('total')){totalVal=pNum(r[key]);break}}
-    if(!totalVal)totalVal=pNum(r[k[9]]||r[k[8]]||r[k[7]]);
-    return{fecha,mes:pNum(r[k[1]])||gMonth(fecha),proveedor:r[k[2]]||'',detalle:r[k[3]]||'',categoria:r[k[4]]||'Sin categoría',total:totalVal,estado:(r[k[10]]||'pendiente').toString().trim().toLowerCase(),pagado_por:r[k[11]]||'',neto:pNum(r[k[7]])}
-  }).filter(e=>e.total>0&&e.total<9e7)
-}
-
-function parseSheetIngresos(data){
-  return data.filter(r=>{const k=Object.keys(r);return r[k[0]]&&r[k[0]]!==''}).map(r=>{
-    const k=Object.keys(r);const fecha=pDate(r[k[0]]);
-    let totalVal=0;for(const key of k){if(key.toLowerCase().includes('total')){totalVal=pNum(r[key]);break}}
-    const neto=pNum(r[k[6]]);if(!totalVal&&neto>0)totalVal=neto;
-    return{fecha,mes:pNum(r[k[1]])||gMonth(fecha),proveedor:r[k[2]]||'',detalle:r[k[3]]||'',categoria:r[k[4]]||'',neto,total:totalVal}
-  }).filter(i=>i.total>0)
-}
-
-function parseSheetVaquillas(data){
-  return data.filter(r=>{const k=Object.keys(r);return r[k[1]]&&r[k[1]].toString().trim()!==''}).map(r=>{
-    const k=Object.keys(r);const com=(r[k[11]]||'').toString();
-    return{fecha:pDate(r[k[0]]),id:(r[k[1]]||'').toString().trim(),factura:(r[k[2]]||'').toString().trim(),kg:pNum(r[k[3]]),precio:pNum(r[k[4]]),valor:pNum(r[k[5]]),fecha_venta:pDate(r[k[6]]),comentarios:com,muerta:com.toLowerCase().includes('muerta')}
-  }).filter(v=>v.kg>0)
-}
-
-async function loadAllData(){
-  const st=document.getElementById('dataStatus');
-  
-  // Load embedded data first (instant)
-  EG=FALLBACK.egresos;IN=FALLBACK.ingresos;VQ=FALLBACK.vaquillas;
-  dataSource='fallback';
-  document.getElementById('loadingArea').style.display='none';
-  document.getElementById('contentArea').style.display='block';
-  st.textContent='● Datos embebidos (actualizando...)';st.className='header-status offline';
-  document.getElementById('dataBanner').className='banner warn';
-  document.getElementById('dataBanner').innerHTML='<div class="icon">⏳</div><div><strong>Cargando datos desde Google Sheets...</strong> Mostrando datos embebidos mientras se conecta.</div>';
-  renderAll();
-  
-  // Try to fetch from Google Sheets in background
-  try{
-    const[eg,in_,vq]=await Promise.all([fetchCSV(SHEETS.egresos),fetchCSV(SHEETS.ingresos),fetchCSV(SHEETS.vaquillas)]);
-    EG=parseSheetEgresos(eg);IN=parseSheetIngresos(in_);VQ=parseSheetVaquillas(vq);
-    dataSource='sheets';
-    st.textContent='● Google Sheets (en vivo)';st.className='header-status live';
-    document.getElementById('dataBanner').className='banner ok';
-    document.getElementById('dataBanner').innerHTML='<div class="icon">✅</div><div><strong>Datos en vivo desde Google Sheets.</strong> Presioná "Actualizar" para recargar.</div>';
-    renderAll();
-  }catch(err){
-    console.warn('Google Sheets no disponible:',err);
-    st.textContent='● Datos embebidos';st.className='header-status offline';
-    document.getElementById('dataBanner').innerHTML='<div class="icon">⚠️</div><div><strong>No se pudo conectar con Google Sheets.</strong> Presioná "Actualizar" para reintentar.</div>';
-  }
-}
-
-// =============================================
 // RENDER
-// =============================================
-function renderAll(){
-  Object.values(charts).forEach(c=>{if(c)c.destroy()});charts={};
-
-  const tE=EG.reduce((s,e)=>s+e.total,0);
-  const tI=IN.reduce((s,i)=>s+i.total,0);
-  const bal=tI-tE;
-  const tC=VQ.length,mu=VQ.filter(v=>v.muerta).length,ve=VQ.filter(v=>v.fecha_venta).length,vi=tC-mu-ve;
-  const invG=VQ.reduce((s,v)=>s+v.valor,0);
-  const ppC=tC>0?VQ.reduce((s,v)=>s+v.kg,0)/tC:0;
-  const prC=tC>0?VQ.reduce((s,v)=>s+v.precio,0)/tC:0;
-
-  const ePM={};EG.forEach(e=>{if(e.mes)ePM[e.mes]=(ePM[e.mes]||0)+e.total});
-  const ePC={};EG.forEach(e=>{ePC[e.categoria]=(ePC[e.categoria]||0)+e.total});
-  const pg=EG.filter(e=>e.estado.includes('pagado')).reduce((s,e)=>s+e.total,0);
-  const pe=tE-pg;
-  const iPM={};IN.forEach(i=>{if(i.mes)iPM[i.mes]=(iPM[i.mes]||0)+i.total});
-  const ap=IN.filter(i=>(i.categoria||'').toLowerCase().includes('aporte')||(i.categoria||'').toLowerCase().includes('capital')).reduce((s,i)=>s+i.total,0);
-  const op=tI-ap;
-
-  const lotM={};VQ.forEach(v=>{if(!v.factura)return;if(!lotM[v.factura])lotM[v.factura]={f:v.fecha,n:0,k:0,val:0,ps:0,m:0};const l=lotM[v.factura];l.n++;l.k+=v.kg;l.val+=v.valor;l.ps+=v.precio;if(v.muerta)l.m++});
-  const lotes=Object.entries(lotM).map(([f,d])=>({fac:f,...d,pa:d.k/d.n,pra:d.ps/d.n}));
-
-  const $=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v};
-  $('k-eg',fmtS(tE));$('k-eg-s',EG.length+' registros');$('k-in',fmtS(tI));$('k-in-s',IN.length+' registros');
-  $('k-bal',fmtS(bal));$('k-inv',vi);$('k-inv-s',`${tC} compradas · ${mu} muertas`);
-  $('k-mort',tC>0?pct(mu/tC):'0%');$('k-mort-s',`${mu} de ${tC}`);
-  $('k-invg',fmtS(invG));$('k-invg-s',tC>0?`${fmt(Math.round(invG/tC))}/animal`:'');
-  $('ke-t',fmtS(tE));$('ke-p',fmtS(pg));$('ke-pe',fmtS(pe));$('ke-c',Object.keys(ePC).length);
-  $('ki-t',fmtS(tI));$('ki-a',fmtS(ap));$('ki-o',fmtS(op));$('ki-b',fmtS(bal));
-  $('kv-t',tC);$('kv-v',vi);$('kv-m',mu);$('kv-mr',`Tasa: ${tC>0?pct(mu/tC):'0%'}`);$('kv-ve',ve);
-  $('kv-p',ppC.toFixed(0)+' kg');$('kv-pr',fmt(prC)+'/kg');
-  $('headerDate','Actualizado: '+new Date().toLocaleDateString('es-CL',{day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'}));
-  $('hK',`Peso prom. compra: ${ppC.toFixed(0)} kg`);$('hP',`Precio prom. compra: ${fmt(prC)}/kg`);
-
-  const dO={responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{family:"'DM Sans'",size:12},usePointStyle:true,padding:16}}},scales:{x:{grid:{display:false},ticks:{font:{family:"'DM Sans'",size:11}}},y:{ticks:{font:{family:"'DM Sans'",size:11},callback:v=>fmtS(v)},grid:{color:'#eee'}}}};
-  const pO={responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{family:"'DM Sans'",size:11},usePointStyle:true,padding:10}}}};
-
-  const aM=[...new Set([...Object.keys(ePM),...Object.keys(iPM)].map(Number))].sort((a,b)=>a-b);
-  const mL=aM.map(m=>MESES[m]);
-
-  charts.c1=new Chart(document.getElementById('c1'),{type:'bar',data:{labels:mL,datasets:[{label:'Egresos',data:aM.map(m=>ePM[m]||0),backgroundColor:'#c0392b',borderRadius:6,barPercentage:.6},{label:'Ingresos',data:aM.map(m=>iPM[m]||0),backgroundColor:'#2d6a4f',borderRadius:6,barPercentage:.6}]},options:dO});
-
-  const cs=Object.entries(ePC).sort((a,b)=>b[1]-a[1]);
-  charts.c2=new Chart(document.getElementById('c2'),{type:'doughnut',data:{labels:cs.map(c=>c[0]),datasets:[{data:cs.map(c=>c[1]),backgroundColor:PAL,borderWidth:2,borderColor:'#fff'}]},options:pO});
-
-  const eM=Object.keys(ePM).map(Number).sort((a,b)=>a-b);
-  charts.c3=new Chart(document.getElementById('c3'),{type:'bar',data:{labels:eM.map(m=>MESES[m]),datasets:[{label:'Egresos',data:eM.map(m=>ePM[m]),backgroundColor:'#2d6a4f',borderRadius:6,barPercentage:.5}]},options:dO});
-  charts.c4=new Chart(document.getElementById('c4'),{type:'doughnut',data:{labels:cs.map(c=>c[0]),datasets:[{data:cs.map(c=>c[1]),backgroundColor:PAL,borderWidth:2,borderColor:'#fff'}]},options:pO});
-  charts.c5=new Chart(document.getElementById('c5'),{type:'doughnut',data:{labels:['Pagado','Pendiente'],datasets:[{data:[pg,pe],backgroundColor:['#2d6a4f','#c0392b'],borderWidth:3,borderColor:'#fff'}]},options:pO});
-
-  const eSC={};EG.forEach(e=>{if(!(e.categoria||'').toLowerCase().includes('compra ternera')&&e.mes)eSC[e.mes]=(eSC[e.mes]||0)+e.total});
-  const scM=Object.keys(eSC).map(Number).sort((a,b)=>a-b);
-  charts.c6=new Chart(document.getElementById('c6'),{type:'line',data:{labels:scM.map(m=>MESES[m]),datasets:[{label:'Gastos Operacionales',data:scM.map(m=>eSC[m]),borderColor:'#b8860b',backgroundColor:'rgba(184,134,11,.1)',fill:true,tension:.3,pointRadius:5,pointBackgroundColor:'#b8860b'}]},options:dO});
-
-  const iM=Object.keys(iPM).map(Number).sort((a,b)=>a-b);
-  charts.c7=new Chart(document.getElementById('c7'),{type:'bar',data:{labels:iM.map(m=>MESES[m]),datasets:[{label:'Ingresos',data:iM.map(m=>iPM[m]),backgroundColor:'#2d6a4f',borderRadius:6,barPercentage:.5}]},options:dO});
-
-  let aE=0,aI=0;
-  charts.c8=new Chart(document.getElementById('c8'),{type:'line',data:{labels:mL,datasets:[{label:'Ingresos Acum.',data:aM.map(m=>{aI+=iPM[m]||0;return aI}),borderColor:'#2d6a4f',backgroundColor:'rgba(45,106,79,.1)',fill:true,tension:.3,pointRadius:4},{label:'Egresos Acum.',data:aM.map(m=>{aE+=ePM[m]||0;return aE}),borderColor:'#c0392b',backgroundColor:'rgba(192,57,43,.1)',fill:true,tension:.3,pointRadius:4}]},options:dO});
-
-  if(lotes.length>0){
-    charts.c9=new Chart(document.getElementById('c9'),{type:'bar',data:{labels:lotes.map(l=>`${l.fac}\n(${l.n} cab.)`),datasets:[{label:'Peso Prom. (kg)',data:lotes.map(l=>l.pa),backgroundColor:'#40916c',borderRadius:6,yAxisID:'y',barPercentage:.4},{label:'Precio ($/kg)',data:lotes.map(l=>l.pra),type:'line',borderColor:'#b8860b',pointRadius:6,pointBackgroundColor:'#b8860b',yAxisID:'y1',tension:.3}]},options:{...dO,scales:{x:{grid:{display:false},ticks:{font:{size:11}}},y:{position:'left',title:{display:true,text:'Kilos'},grid:{color:'#eee'}},y1:{position:'right',title:{display:true,text:'$/kg'},ticks:{callback:v=>'$'+v},grid:{display:false}}}}});
-    charts.c10=new Chart(document.getElementById('c10'),{type:'bar',data:{labels:lotes.map(l=>`Lote ${l.fac}`),datasets:[{label:'Inversión',data:lotes.map(l=>l.val),backgroundColor:'#2d6a4f',borderRadius:6,barPercentage:.5}]},options:{...dO,indexAxis:'y'}});
-  }
-
+function render() {
+  document.getElementById('fecha').textContent = new Date().toLocaleDateString('es-CL', {day:'numeric',month:'long',year:'numeric'});
+  
+  const tE = EGRESOS.reduce((s,e) => s + e.total, 0);
+  const tI = INGRESOS.reduce((s,i) => s + i.total, 0);
+  const bal = tI - tE;
+  const tC = VAQUILLAS.length;
+  const mu = VAQUILLAS.filter(v => v.muerta).length;
+  const vi = tC - mu;
+  const invG = VAQUILLAS.reduce((s,v) => s + v.valor, 0);
+  
+  document.getElementById('eg-total').textContent = fmtS(tE);
+  document.getElementById('in-total').textContent = fmtS(tI);
+  document.getElementById('balance').textContent = fmtS(bal);
+  document.getElementById('inv').textContent = vi;
+  document.getElementById('inv-sub').textContent = `${tC} compradas · ${mu} muertas`;
+  
+  document.getElementById('eg-t').textContent = fmtS(tE);
+  document.getElementById('eg-p').textContent = fmtS(EGRESOS.filter(e => e.estado === 'pagado').reduce((s,e) => s+e.total, 0));
+  document.getElementById('eg-pe').textContent = fmtS(EGRESOS.filter(e => e.estado === 'pendiente').reduce((s,e) => s+e.total, 0));
+  
+  document.getElementById('in-t').textContent = fmtS(tI);
+  document.getElementById('in-ap').textContent = fmtS(INGRESOS.filter(i => i.categoria.includes('capital')).reduce((s,i) => s+i.total, 0));
+  document.getElementById('in-op').textContent = '—';
+  
+  document.getElementById('vq-t').textContent = tC;
+  document.getElementById('vq-v').textContent = vi;
+  document.getElementById('vq-m').textContent = mu;
+  document.getElementById('vq-pct').textContent = `${((mu/tC)*100).toFixed(1)}%`;
+  document.getElementById('vq-inv').textContent = fmtS(invG);
+  
+  // Egresos por mes
+  const epm = {};
+  EGRESOS.forEach(e => { epm[e.mes] = (epm[e.mes]||0) + e.total; });
+  const ipm = {};
+  INGRESOS.forEach(i => { ipm[i.mes] = (ipm[i.mes]||0) + i.total; });
+  
+  const allM = [...new Set([...Object.keys(epm),...Object.keys(ipm)].map(Number))].sort((a,b) => a-b);
+  
+  new Chart(document.getElementById('c1'), {
+    type: 'bar',
+    data: { labels: allM.map(m => MESES[m]), datasets: [
+      { label: 'Egresos', data: allM.map(m => epm[m]||0), backgroundColor: '#d32f2f', borderRadius: 6 },
+      { label: 'Ingresos', data: allM.map(m => ipm[m]||0), backgroundColor: '#2d5016', borderRadius: 6 }
+    ]},
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } }
+  });
+  
+  const epc = {};
+  EGRESOS.forEach(e => { epc[e.categoria] = (epc[e.categoria]||0) + e.total; });
+  const cs = Object.entries(epc).sort((a,b) => b[1]-a[1]);
+  
+  new Chart(document.getElementById('c2'), {
+    type: 'doughnut',
+    data: { labels: cs.map(c => c[0]), datasets: [{ data: cs.map(c => c[1]), backgroundColor: ['#2d5016','#d32f2f','#f57c00','#1976d2','#7b1fa2'] }]},
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
+  });
+  
+  new Chart(document.getElementById('c3'), {
+    type: 'bar',
+    data: { labels: Object.keys(epm).map(Number).sort((a,b) => a-b).map(m => MESES[m]), datasets: [
+      { label: 'Egresos', data: Object.keys(epm).map(Number).sort((a,b) => a-b).map(m => epm[m]), backgroundColor: '#2d5016', borderRadius: 6 }
+    ]},
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } }
+  });
+  
   // Tables
-  document.getElementById('t1b').innerHTML=[...EG].sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||'')).map(e=>`<tr><td>${e.fecha||'—'}</td><td>${e.proveedor}</td><td>${e.detalle||'—'}</td><td>${e.categoria}</td><td style="text-align:right;white-space:nowrap">${fmt(e.total)}</td><td><span class="${e.estado.includes('pagado')?'badge-ok':'badge-warn'}">${e.estado.includes('pagado')?'Pagado':'Pendiente'}</span></td><td>${e.pagado_por||'—'}</td></tr>`).join('');
-  document.getElementById('t2b').innerHTML=IN.map(i=>`<tr><td>${i.fecha||'—'}</td><td>${i.proveedor}</td><td>${i.detalle||'—'}</td><td>${i.categoria}</td><td style="text-align:right">${fmt(i.neto)}</td><td style="text-align:right">${fmt(i.total)}</td></tr>`).join('');
-  document.getElementById('t3b').innerHTML=VQ.map(v=>`<tr><td>${v.fecha||''}</td><td style="font-family:monospace;font-size:12px">${v.id}</td><td>${v.factura}</td><td style="text-align:right">${v.kg.toFixed(1)}</td><td style="text-align:right">${fmt(v.precio)}</td><td style="text-align:right">${fmt(v.valor)}</td><td>${v.muerta?'<span class="badge-warn">Muerta</span>':'<span class="badge-ok">Viva</span>'}</td><td>${v.comentarios||'—'}</td></tr>`).join('');
-
-  window._p={vi,invG,ppC,prC};updProj();
+  document.getElementById('eg-table').innerHTML = EGRESOS.map(e => `<tr>
+    <td>${e.fecha}</td><td>${e.proveedor}</td><td>${e.detalle}</td><td>${e.categoria}</td>
+    <td style="text-align:right">${fmt(e.total)}</td>
+    <td><span style="background:${e.estado==='pagado'?'#c8e6c8':'#ffcdd2'};padding:2px 8px;border-radius:4px;font-size:11px">${e.estado}</span></td></tr>`).join('');
+  
+  document.getElementById('in-table').innerHTML = INGRESOS.map(i => `<tr>
+    <td>${i.fecha}</td><td>${i.proveedor}</td><td>${i.detalle}</td><td>${i.categoria}</td>
+    <td style="text-align:right">${fmt(i.total)}</td></tr>`).join('');
+  
+  document.getElementById('vq-table').innerHTML = VAQUILLAS.map(v => `<tr>
+    <td>${v.fecha}</td><td>${v.id}</td><td>${v.factura}</td><td>${v.kg.toFixed(1)}</td>
+    <td>${fmt(v.precio)}</td><td>${fmt(v.valor)}</td>
+    <td><span style="background:${v.muerta?'#ffcdd2':'#c8e6c8'};padding:2px 6px;border-radius:3px;font-size:11px">${v.muerta?'Muerta':'Viva'}</span></td></tr>`).join('');
 }
 
-// Projector
-function updProj(){
-  const d=window._p;if(!d)return;
-  const kV=+(document.getElementById('pK').value)||400,pV=+(document.getElementById('pP').value)||2500,cA=+(document.getElementById('pC').value)||0,mA=+(document.getElementById('pM').value)||0;
-  const aV=d.vi-mA,iP=aV*kV*pV,cT=aV*cA,uB=iP-d.invG-cT,mg=iP>0?uB/iP:0,uA=aV>0?uB/aV:0,kG=kV-d.ppC,pos=uB>=0;
-  document.getElementById('projR').innerHTML=`
-    <div class="result-card highlight"><div class="kpi-label">Utilidad Proyectada</div><div class="kpi-value">${fmtS(uB)}</div></div>
-    <div class="result-card ${pos?'':'negative'}"><div class="kpi-label">Margen</div><div class="kpi-value">${pct(mg)}</div></div>
-    <div class="result-card"><div class="kpi-label">Ingreso Proyectado</div><div class="kpi-value">${fmtS(iP)}</div><div class="kpi-sub">${aV} × ${kV}kg × ${fmt(pV)}/kg</div></div>
-    <div class="result-card"><div class="kpi-label">Utilidad / Animal</div><div class="kpi-value">${fmt(uA)}</div></div>
-    <div class="result-card"><div class="kpi-label">Kg Ganados / Animal</div><div class="kpi-value">${kG>0?'+':''}${kG.toFixed(0)} kg</div><div class="kpi-sub">De ${d.ppC.toFixed(0)} a ${kV} kg</div></div>
-    <div class="result-card"><div class="kpi-label">Animales a Vender</div><div class="kpi-value">${aV}</div><div class="kpi-sub">${d.vi} vivas − ${mA} mort.</div></div>`;
-  if(charts.c11)charts.c11.destroy();
-  charts.c11=new Chart(document.getElementById('c11'),{type:'bar',data:{labels:['Inversión','Costos Adic.','Ingreso Proy.','Utilidad'],datasets:[{data:[d.invG,cT,iP,uB],backgroundColor:['#c0392b','#b8860b','#2d6a4f',pos?'#40916c':'#e74c3c'],borderRadius:6,barPercentage:.5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{ticks:{callback:v=>fmtS(v)},grid:{color:'#eee'}}}}});
+// Tabs
+const sections = document.querySelectorAll('.section');
+const tabs = ['resumen', 'egresos', 'ingresos', 'vaquillas'];
+document.getElementById('tabs').innerHTML = tabs.map(t => `<button class="tab ${t==='resumen'?'active':''}" onclick="switchTab('${t}')">${t.charAt(0).toUpperCase() + t.slice(1)}</button>`).join('');
+
+function switchTab(name) {
+  sections.forEach(s => s.classList.remove('active'));
+  document.getElementById(name).classList.add('active');
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
 }
 
-// Tabs & Tables
-document.getElementById('tabsContainer').addEventListener('click',e=>{if(!e.target.classList.contains('tab'))return;document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.getElementById('sec-'+e.target.dataset.tab).classList.add('active');e.target.classList.add('active')});
-function toggleTable(id){const el=document.getElementById(id);const btn=el.parentElement.querySelector('.table-toggle');el.classList.toggle('open');btn.textContent=el.classList.contains('open')?'Ocultar tabla ▴':'Mostrar tabla ▾'}
-
-// Init — wait for libraries
-function init(){if(typeof Chart!=='undefined'&&typeof Papa!=='undefined'){loadAllData()}else{setTimeout(init,200)}}
-init();
+// Init
+render();
 </script>
 </body>
 </html>
