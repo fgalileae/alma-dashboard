@@ -203,9 +203,9 @@
 // GOOGLE SHEETS URLs
 // =============================================
 const SHEETS = {
-  egresos:   'https://docs.google.com/spreadsheets/d/e/2PACX-1vR1qaSDZ66E0RY5hUwDwOTRnYK9a18IiBvlpay5MjTMlnVRH2W9wg6So_xZvt2yDg/pub?gid=251842715&single=true&output=csv',
-  ingresos:  'https://docs.google.com/spreadsheets/d/e/2PACX-1vR1qaSDZ66E0RY5hUwDwOTRnYK9a18IiBvlpay5MjTMlnVRH2W9wg6So_xZvt2yDg/pub?gid=1932568394&single=true&output=csv',
-  vaquillas: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR1qaSDZ66E0RY5hUwDwOTRnYK9a18IiBvlpay5MjTMlnVRH2W9wg6So_xZvt2yDg/pub?gid=918181225&single=true&output=csv'
+  egresos:   'https://docs.google.com/spreadsheets/d/e/2PACX-1vTbLGh8Z9Ljexk6mMNdfC7gPjLChI872IqWGgsMnVFS3W6pqZ6dVy6RfmFk9m8NsA/pub?gid=2126462434&single=true&output=csv',
+  ingresos:  'https://docs.google.com/spreadsheets/d/e/2PACX-1vTbLGh8Z9Ljexk6mMNdfC7gPjLChI872IqWGgsMnVFS3W6pqZ6dVy6RfmFk9m8NsA/pub?gid=774586306&single=true&output=csv',
+  vaquillas: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTbLGh8Z9Ljexk6mMNdfC7gPjLChI872IqWGgsMnVFS3W6pqZ6dVy6RfmFk9m8NsA/pub?gid=2027323341&single=true&output=csv'
 };
 
 // =============================================
@@ -380,7 +380,7 @@ let EG=[],IN=[],VQ=[];
 let charts={};
 let dataSource='fallback';
 
-function fetchCSV(url){return new Promise((res,rej)=>{Papa.parse(url,{download:true,header:true,skipEmptyLines:true,complete:r=>res(r.data),error:e=>rej(e)})})}
+function fetchCSV(url){return new Promise((res,rej)=>{const proxied='https://api.allorigins.win/raw?url='+encodeURIComponent(url);Papa.parse(proxied,{download:true,header:true,skipEmptyLines:true,timeout:10000,complete:r=>res(r.data),error:e=>rej(e)})})}
 
 function parseSheetEgresos(data){
   return data.filter(r=>{const k=Object.keys(r);return r[k[0]]&&r[k[0]]!==''}).map(r=>{
@@ -409,28 +409,31 @@ function parseSheetVaquillas(data){
 
 async function loadAllData(){
   const st=document.getElementById('dataStatus');
-  document.getElementById('loadingArea').style.display='block';
-  document.getElementById('contentArea').style.display='none';
-  st.textContent='Cargando...';st.className='header-status';
-
+  
+  // Load embedded data first (instant)
+  EG=FALLBACK.egresos;IN=FALLBACK.ingresos;VQ=FALLBACK.vaquillas;
+  dataSource='fallback';
+  document.getElementById('loadingArea').style.display='none';
+  document.getElementById('contentArea').style.display='block';
+  st.textContent='● Datos embebidos (actualizando...)';st.className='header-status offline';
+  document.getElementById('dataBanner').className='banner warn';
+  document.getElementById('dataBanner').innerHTML='<div class="icon">⏳</div><div><strong>Cargando datos desde Google Sheets...</strong> Mostrando datos embebidos mientras se conecta.</div>';
+  renderAll();
+  
+  // Try to fetch from Google Sheets in background
   try{
     const[eg,in_,vq]=await Promise.all([fetchCSV(SHEETS.egresos),fetchCSV(SHEETS.ingresos),fetchCSV(SHEETS.vaquillas)]);
     EG=parseSheetEgresos(eg);IN=parseSheetIngresos(in_);VQ=parseSheetVaquillas(vq);
     dataSource='sheets';
     st.textContent='● Google Sheets (en vivo)';st.className='header-status live';
     document.getElementById('dataBanner').className='banner ok';
-    document.getElementById('dataBanner').innerHTML='<div class="icon">✅</div><div><strong>Datos en vivo desde Google Sheets.</strong> Actualización automática cada vez que abrís el dashboard.</div>';
+    document.getElementById('dataBanner').innerHTML='<div class="icon">✅</div><div><strong>Datos en vivo desde Google Sheets.</strong> Presioná "Actualizar" para recargar.</div>';
+    renderAll();
   }catch(err){
-    console.warn('Sheets no disponible, usando datos embebidos:',err);
-    EG=FALLBACK.egresos;IN=FALLBACK.ingresos;VQ=FALLBACK.vaquillas;
-    dataSource='fallback';
-    st.textContent='● Datos locales';st.className='header-status offline';
-    document.getElementById('dataBanner').className='banner warn';
-    document.getElementById('dataBanner').innerHTML='<div class="icon">⚠️</div><div><strong>Mostrando datos embebidos.</strong> Para datos en vivo desde Google Sheets, subí este archivo a <a href="https://pages.github.com" target="_blank" style="color:#2471a3">GitHub Pages</a> (como Under Par). Desde ahí la conexión funciona automáticamente.</div>';
+    console.warn('Google Sheets no disponible:',err);
+    st.textContent='● Datos embebidos';st.className='header-status offline';
+    document.getElementById('dataBanner').innerHTML='<div class="icon">⚠️</div><div><strong>No se pudo conectar con Google Sheets.</strong> Presioná "Actualizar" para reintentar.</div>';
   }
-  document.getElementById('loadingArea').style.display='none';
-  document.getElementById('contentArea').style.display='block';
-  renderAll();
 }
 
 // =============================================
